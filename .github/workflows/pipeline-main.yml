@@ -22,7 +22,7 @@ jobs:
     #         CLOUD_RUN_RAM: 512Mi
 
     python-aws:
-        uses: agricapt-hack/backend/.github/workflows/python-aws-ec2-main.yml@main
+        uses: agricapt-hack/backend/.github/workflows/python-awsec2-main.yml@main
         secrets: inherit
         with:
             DOCKER_FILE: Dockerfile.app
