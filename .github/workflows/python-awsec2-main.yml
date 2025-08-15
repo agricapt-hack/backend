@@ -1,0 +1,61 @@
+name: Deploy Python App to AWS EC2
+
+on:
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      DOCKER_FILE:
+        type: string
+        required: true
+      IMAGE_NAME:
+        type: string
+        required: true
+      APP_DIR:
+        type: string
+        required: true
+
+jobs:
+  deploy_to_ec2:
+    name: Checkout, Build & Deploy
+    if: ${{ !contains(github.event.head_commit.message, '[skip-ci]') }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Store EC2 private key
+      - name: Set up SSH key
+        run: |
+          echo "${{ secrets.EC2_KEY }}" > ec2_key.pem
+          chmod 600 ec2_key.pem
+
+      # Build Docker image locally
+      - name: Build Docker image
+        run: |
+          docker build -f ${{ inputs.DOCKER_FILE }} -t ${{ inputs.IMAGE_NAME }}:latest .
+
+      # Save Docker image as tar
+      - name: Save Docker image
+        run: |
+          docker save ${{ inputs.IMAGE_NAME }}:latest | gzip > image.tar.gz
+
+      # Copy image to EC2
+      - name: Copy Docker image to EC2
+        run: |
+          scp -i ec2_key.pem -o StrictHostKeyChecking=no image.tar.gz ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/tmp/image.tar.gz
+
+      # SSH into EC2 and deploy
+      - name: Deploy on EC2
+        run: |
+          ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            set -e
+            docker load < /tmp/image.tar.gz
+            docker stop ${{ inputs.IMAGE_NAME }} || true
+            docker rm ${{ inputs.IMAGE_NAME }} || true
+            docker run -d --name ${{ inputs.IMAGE_NAME }} -p 80:80 -v ${{ inputs.APP_DIR }}:/app ${{ inputs.IMAGE_NAME }}:latest
+            rm /tmp/image.tar.gz
+          EOF
+
+      - name: Deployment complete
+        run: echo "✅ Application deployed successfully to AWS EC2!"

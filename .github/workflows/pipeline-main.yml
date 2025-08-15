@@ -22,10 +22,10 @@ jobs:
     #         CLOUD_RUN_RAM: 512Mi
 
     python-aws:
-        uses: agricapt-hack/backend/.github/workflows/python-aws-main.yml@main
+        uses: agricapt-hack/backend/.github/workflows/python-aws-ec2-main.yml@main
         secrets: inherit
         with:
-            AWS_REGION: us-east-1
-            EB_APP_NAME: harvestai
-            EB_ENV_NAME: harvestai-env
             DOCKER_FILE: Dockerfile.app
+            IMAGE_NAME: capital-one-server-image
+            APP_DIR: /app
+            
