@@ -25,63 +25,70 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1️⃣ Checkout code
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Store EC2 private key
-      - name: Set up SSH key
+      # 2️⃣ Set up SSH key and .env
+      - name: Set up SSH key and .env
         run: |
           echo "${{ secrets.EC2_KEY }}" > ec2_key.pem
-          echo "${{ secrets.ENV }}" > .env
+          printf "%s" "${{ secrets.ENV }}" > .env
           chmod 600 ec2_key.pem
+          chmod 600 .env
 
-      # Prepare app directory on EC2
+      # 3️⃣ Prepare app directory on EC2
       - name: Prepare EC2 directory
         run: |
-          ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << EOF
+          ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
             set -e
             mkdir -p ${{ inputs.APP_DIR }}
             rm -rf ${{ inputs.APP_DIR }}/*
           EOF
 
-      # Copy source code to EC2
+      # 4️⃣ Copy source code to EC2
       - name: Copy source to EC2
         run: |
           scp -i ec2_key.pem -o StrictHostKeyChecking=no -r ./* \
             ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:${{ inputs.APP_DIR }}/
 
-      # Copy .env file to EC2
-      - name: Copy env to EC2
+      # 5️⃣ Copy .env file to EC2
+      - name: Copy .env to EC2
         run: |
           scp -i ec2_key.pem -o StrictHostKeyChecking=no .env \
             ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:${{ inputs.APP_DIR }}/.env
 
-      # Copy deploy script to EC2
+      # 6️⃣ Copy deploy script to EC2
       - name: Copy deploy script to EC2
         run: |
           scp -i ec2_key.pem -o StrictHostKeyChecking=no deploy_on_ec2.sh \
             ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:${{ inputs.APP_DIR }}/
 
-      # Run deploy script on EC2
+      # 7️⃣ Build & run Docker app on EC2
       - name: Build & Run on EC2
         run: |
-          ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \
-            "cd ${{ inputs.APP_DIR }} && chmod +x deploy_on_ec2.sh && ./deploy_on_ec2.sh '${{ inputs.DOCKER_FILE }}' '${{ inputs.IMAGE_NAME }}' '${{ inputs.APP_PORT }}'"
+          ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << EOF
+            set -e
 
-      - name: Deployment complete
-        run: echo "✅ Application deployed successfully on AWS EC2!"
-              sudo usermod -aG docker $USER
-              newgrp docker << EONG
-                echo "Docker installed and group updated"
-              EONG
-            fi
- 
+            # Add user to docker group (if not already)
+            sudo usermod -aG docker \$USER || true
+            newgrp docker << EONG
+              echo "Docker group updated"
+            EONG
+
             cd ${{ inputs.APP_DIR }}
+
+            # Stop and remove existing container if exists
             docker stop ${{ inputs.IMAGE_NAME }} || true
             docker rm ${{ inputs.IMAGE_NAME }} || true
+
+            # Build Docker image
             docker build -f ${{ inputs.DOCKER_FILE }} -t ${{ inputs.IMAGE_NAME }}:latest .
+
+            # Run Docker container
             docker run -d --name ${{ inputs.IMAGE_NAME }} -p ${{ inputs.APP_PORT }}:${{ inputs.APP_PORT }} ${{ inputs.IMAGE_NAME }}:latest
           EOF
 
+      # 8️⃣ Deployment complete
       - name: Deployment complete
         run: echo "✅ Application deployed successfully on AWS EC2!"
