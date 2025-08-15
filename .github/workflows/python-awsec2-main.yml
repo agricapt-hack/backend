@@ -63,10 +63,8 @@ jobs:
               sudo apt-get install -y docker.io
               sudo systemctl enable docker
               sudo systemctl start docker
-              sudo usermod -aG docker $USER
-              newgrp docker << EONG
-                echo "Docker installed and group updated"
-              EONG
+              sudo usermod -aG docker \$USER
+              echo "Docker installed and user added to docker group"
             fi
 
             cd ${{ inputs.APP_DIR }}
@@ -76,5 +74,7 @@ jobs:
             docker run -d --name ${{ inputs.IMAGE_NAME }} -p ${{ inputs.APP_PORT }}:${{ inputs.APP_PORT }} ${{ inputs.IMAGE_NAME }}:latest
           EOF
 
+      - name: Deployment complete
+        run: echo "✅ Application deployed successfully on AWS EC2!"
       - name: Deployment complete
         run: echo "✅ Application deployed successfully on AWS EC2!"
