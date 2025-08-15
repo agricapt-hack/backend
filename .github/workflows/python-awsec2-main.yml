@@ -75,7 +75,7 @@ jobs:
                 echo "Docker installed and group updated"
               EONG
             fi
-
+ 
             cd ${{ inputs.APP_DIR }}
             docker stop ${{ inputs.IMAGE_NAME }} || true
             docker rm ${{ inputs.IMAGE_NAME }} || true
