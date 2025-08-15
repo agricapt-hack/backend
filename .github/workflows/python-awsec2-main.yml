@@ -32,7 +32,7 @@ jobs:
       - name: Set up SSH key
         run: |
           echo "${{ secrets.EC2_KEY }}" > ec2_key.pem
-          echo "${{ secrets.env }}" > .env
+          echo "${{ secrets.ENV }}" > .env
           chmod 600 ec2_key.pem
 
       # Prepare app directory on EC2
@@ -53,8 +53,8 @@ jobs:
       # Copy .env file to EC2
       - name: Copy env to EC2
         run: |
-          scp -i ec2_key.pem -o StrictHostKeyChecking=no .env \
-            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:${{ inputs.APP_DIR }}/.env  
+          scp -i .env -o StrictHostKeyChecking=no .env \
+            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:${{ inputs.APP_DIR }}/.env
 
       # Copy deploy script to EC2
       - name: Copy deploy script to EC2
