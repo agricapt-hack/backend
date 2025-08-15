@@ -1,0 +1,72 @@
+name: Deploy Python App to AWS Elastic Beanstalk
+
+on:
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      AWS_REGION:
+        type: string
+        required: true
+      EB_APP_NAME:
+        type: string
+        required: true
+      EB_ENV_NAME:
+        type: string
+        required: true
+      DOCKER_FILE:
+        type: string
+        required: true
+
+jobs:
+  code_checkout:
+    name: Checkout And Deploy
+    if: ${{ !contains(github.event.head_commit.message, '[skip-ci]') }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ inputs.AWS_REGION }}
+
+      - name: Install AWS CLI
+        run: |
+          pip install --upgrade pip
+          pip install awscli
+
+      # -------------------------
+      # BUILD AND DEPLOY
+      # -------------------------
+      - name: Build Docker Image
+        run: |
+          echo "${{ secrets.env }}" > backend/.env
+          docker build -f ${{ inputs.DOCKER_FILE }} -t python-app:latest .
+          docker images
+
+      - name: Zip Application for Elastic Beanstalk
+        run: |
+          zip -r app.zip . -x "*.git*" "backend/key.json"
+
+      - name: Deploy to Elastic Beanstalk
+        run: |
+          aws elasticbeanstalk create-application-version \
+            --application-name ${{ inputs.EB_APP_NAME }} \
+            --version-label github-${{ github.run_id }} \
+            --source-bundle S3Bucket=${{ inputs.EB_APP_NAME }},S3Key=app.zip
+
+          aws elasticbeanstalk update-environment \
+            --environment-name ${{ inputs.EB_ENV_NAME }} \
+            --version-label github-${{ github.run_id }}
+
+      - name: Display Environment URL
+        run: |
+          EB_URL=$(aws elasticbeanstalk describe-environments \
+            --environment-names ${{ inputs.EB_ENV_NAME }} \
+            --query "Environments[0].CNAME" --output text)
+          echo "✅ Elastic Beanstalk Environment Updated Successfully!"
+          echo "🌍 Deployed URL: http://$EB_URL"
