@@ -32,6 +32,7 @@ jobs:
       - name: Set up SSH key
         run: |
           echo "${{ secrets.EC2_KEY }}" > ec2_key.pem
+          echo "${{ secrets.env }}" > .env
           chmod 600 ec2_key.pem
 
       # Prepare app directory on EC2

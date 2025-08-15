@@ -174,3 +174,4 @@ key.json
 .venv
 .env
 *.ipynb
+*.pem
