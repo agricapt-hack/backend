@@ -49,22 +49,24 @@ jobs:
           scp -i ec2_key.pem -o StrictHostKeyChecking=no -r ./* \
             ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:${{ inputs.APP_DIR }}/
 
-      # Build & Run on EC2
+      # Copy deploy script to EC2
+      - name: Copy deploy script to EC2
+        run: |
+          scp -i ec2_key.pem -o StrictHostKeyChecking=no deploy_on_ec2.sh \
+            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:${{ inputs.APP_DIR }}/
+
+      # Run deploy script on EC2
       - name: Build & Run on EC2
         run: |
-          ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << EOF
-            set -e
+          ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \
+            "cd ${{ inputs.APP_DIR }} && chmod +x deploy_on_ec2.sh && ./deploy_on_ec2.sh '${{ inputs.DOCKER_FILE }}' '${{ inputs.IMAGE_NAME }}' '${{ inputs.APP_PORT }}'"
 
-            # Install Docker if missing
-            if ! command -v docker &> /dev/null
-            then
-              echo "🚀 Installing Docker..."
-              sudo apt-get update
-              sudo apt-get install -y docker.io
-              sudo systemctl enable docker
-              sudo systemctl start docker
-              sudo usermod -aG docker \$USER
-              echo "Docker installed and user added to docker group"
+      - name: Deployment complete
+        run: echo "✅ Application deployed successfully on AWS EC2!"
+              sudo usermod -aG docker $USER
+              newgrp docker << EONG
+                echo "Docker installed and group updated"
+              EONG
             fi
 
             cd ${{ inputs.APP_DIR }}
@@ -74,7 +76,5 @@ jobs:
             docker run -d --name ${{ inputs.IMAGE_NAME }} -p ${{ inputs.APP_PORT }}:${{ inputs.APP_PORT }} ${{ inputs.IMAGE_NAME }}:latest
           EOF
 
-      - name: Deployment complete
-        run: echo "✅ Application deployed successfully on AWS EC2!"
       - name: Deployment complete
         run: echo "✅ Application deployed successfully on AWS EC2!"
