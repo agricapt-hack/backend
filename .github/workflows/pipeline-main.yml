@@ -25,7 +25,8 @@ jobs:
         uses: agricapt-hack/backend/.github/workflows/python-awsec2-main.yml@main
         secrets: inherit
         with:
-            DOCKER_FILE: Dockerfile.app
+            DOCKER_FILE: "./Dockerfile.app"
             IMAGE_NAME: capital-one-server-image
-            APP_DIR: /app
+            APP_DIR: "/home/ubuntu/app"
+            APP_PORT: "8080"
             
