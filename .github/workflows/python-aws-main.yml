@@ -44,7 +44,7 @@ jobs:
       # -------------------------
       - name: Build Docker Image
         run: |
-          echo "${{ secrets.env }}" > backend/.env
+          echo "${{ secrets.env }}" > app/.env
           docker build -f ${{ inputs.DOCKER_FILE }} -t python-app:latest .
           docker images
 
