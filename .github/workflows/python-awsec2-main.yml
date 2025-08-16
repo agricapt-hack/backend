@@ -37,6 +37,10 @@ jobs:
         run: |
           echo "${{ secrets.EC2_KEY }}" > ec2_key.pem
           chmod 600 ec2_key.pem
+          echo "${{ secrets.HTTPS_CERT }}" > https_cert.pem
+          chmod 600 https_cert.pem
+          echo "${{ secrets.HTTPS_KEY }}" > https_key.pem
+          chmod 600 https_key.pem
 
       # 3️⃣ Prepare app directory on EC2
       - name: Prepare EC2 directory
