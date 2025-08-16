@@ -74,13 +74,13 @@ jobs:
             set -e
             cd ${{ inputs.APP_DIR }}
 
-            docker kill ${{ inputs.CONTAINER_NAME }} || echo " ${{ inputs.CONTAINER_NAME }} cannot be killed "
-            docker rmi -f \$(docker images -q) || echo "Failed to remove images"
-            docker system prune -a --volumes -f || echo "Failed to prune system"
+            docker kill ${{ inputs.CONTAINER_NAME }} || echo ' ${{ inputs.CONTAINER_NAME }} cannot be killed '
+            docker rmi -f \$(docker images -q) || echo 'Failed to remove images'
+            docker system prune -a --volumes -f || echo 'Failed to prune system'
             docker build -f ${{ inputs.DOCKER_FILE }} -t ${{ inputs.IMAGE_NAME }}:latest .
             docker run -d --name ${{ inputs.CONTAINER_NAME }} -p ${{ inputs.APP_PORT }}:${{ inputs.APP_PORT }} ${{ inputs.IMAGE_NAME }}:latest
           EOF
 
       # 8️⃣ Deployment complete
       - name: Deployment complete
-        run: echo "✅ Application deployed successfully on AWS EC2!"
+        run: echo '✅ Application deployed successfully on AWS EC2!'
