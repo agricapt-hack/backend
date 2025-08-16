@@ -55,6 +55,25 @@ class BaseMongoHandler:
             list: List of items matching the query.
         """
         return list(self.collection.find(query))
+    
+    def update_by_id(self, unique_field, value, update_fields):
+        """
+        Updates an item in the collection by its unique field.
+        
+        Args:
+            unique_field (str): The field that uniquely identifies the item.
+            value: The value of the unique field to identify the item.
+            update_fields (dict): The fields to update.
+        
+        Returns:
+            dict: The updated item.
+        """
+        result = self.collection.find_one_and_update(
+            {unique_field: value},
+            {'$set': update_fields},
+            return_document=True
+        )
+        return result
 
     def delete_by_id(self, unique_field, value):
         result = self.collection.delete_one({unique_field: value})

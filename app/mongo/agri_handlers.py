@@ -242,7 +242,9 @@ Instructions:
         """
         alert = {
             **alert,
-            "delivery_status": "pending"  # [ 'pending', 'wap', 'mail' , 'wap+mail']
+            "delivery_status": "pending",  # [ 'pending', 'wap', 'mail' , 'wap+mail']
+            "comments": [],
+            "resolved": False
         }
         return self.add_item(
             item=alert,
@@ -276,6 +278,30 @@ Instructions:
         result = self.collection.update_one(
             {"alert_id": alert_id},
             {"$set": {"delivery_status": delivery_status}}
+        )
+        return result.modified_count > 0
+    
+    def change_alert_status(self, alert_id: str, resolved: bool):
+        """
+        Change the resolved status of an alert.
+        """
+        if not alert_id:
+            return False
+        result = self.collection.update_one(
+            {"alert_id": alert_id},
+            {"$set": {"resolved": resolved}}
+        )
+        return result.modified_count > 0
+    
+    def add_comment_to_alert(self, alert_id: str, comment: str):
+        """
+        Add a comment to an alert.
+        """
+        if not alert_id or not comment:
+            return False
+        result = self.collection.update_one(
+            {"alert_id": alert_id},
+            {"$push": {"comments": comment}}
         )
         return result.modified_count > 0
 
@@ -471,7 +497,10 @@ class FieldHandler(BaseMongoHandler):
         }
         """
         return self.add_item(
-            item=field,
+            item={
+                **field,
+                "created_at": datetime.utcnow().isoformat()
+            },
             unique_field="field_id"
         )
     
@@ -528,16 +557,23 @@ def reset_handlers(exclusions=[]):
     This is useful for testing or resetting the database.
     """
     if 'product' not in exclusions:
+        print("Resetting AgriProductHandler...")
         AGRI_PRODUCT_HANDLER.delete_all()
     if 'service' not in exclusions:
+        print("Resetting AgriServiceHandler...")
         AGRI_SERVICE_HANDLER.delete_all()
     if 'suggestion' not in exclusions:
+        print("Resetting ProductServiceSuggestionHandler...")
         AGRI_PRODUCT_SERVICE_SUGGESTION_HANDLER.delete_all()
     if 'alert' not in exclusions:
+        print("Resetting AlertStorageHandler...")
         ALERT_STORAGE_HANDLER.delete_all()
     if 'user' not in exclusions:
+        print("Resetting UserHandler...")
         USER_HANDLER.delete_all()
     if 'weather' not in exclusions:
+        print("Resetting WeatherHandler...")
         WEATHER_HANDLER.delete_all()
     if 'field' not in exclusions:
-        FIELD_HANDLER.delete_all()  
+        print("Resetting FieldHandler...")
+        FIELD_HANDLER.delete_all()

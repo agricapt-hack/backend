@@ -175,3 +175,7 @@ key.json
 .env
 *.ipynb
 *.pem
+*.png
+*.jpg
+*.jpeg
+*.gif

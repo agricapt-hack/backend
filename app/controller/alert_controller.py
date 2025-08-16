@@ -159,6 +159,48 @@ def delete_alert():
         return jsonify({'success': False, 'message': str(e)}), 500
     
 
+@alert_blueprint.route('/change-alert-status', methods=['POST'])
+def change_alert_status():
+    """
+    Sample request JSON:
+    {
+        "alert_id": "alert_001",
+        "resolved": true,
+        "new_comment": "Alert resolved successfully"
+    }
+    """
+    data = request.get_json()
+    alert_id = data.get('alert_id')
+    resolved = data.get('resolved', False)
+    new_comment = data.get('new_comment', '')
+
+    if not alert_id:
+        return jsonify({'success': False, 'message': 'Alert ID is required'}), 400
+
+    try:
+        alert = ALERT_STORAGE_HANDLER.get_by_id(
+            unique_field='alert_id',
+            value=alert_id
+        )
+         # Check if alert exists
+        if not alert:
+            return jsonify({'success': False, 'message': 'Alert not found'}), 404
+
+        ALERT_STORAGE_HANDLER.change_alert_status(
+            alert_id=alert_id,
+            resolved=resolved
+        )
+        ALERT_STORAGE_HANDLER.add_comment_to_alert(
+            alert_id=alert_id,
+            comment=new_comment
+        )
+        
+        return jsonify({'success': True, 'message': 'Alert status updated successfully'}), 200
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+
 @alert_blueprint.route('/delete-suggestion', methods=['POST'])
 def delete_suggestion():
     """
