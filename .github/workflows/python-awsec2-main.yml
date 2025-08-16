@@ -53,23 +53,23 @@ jobs:
           scp -i ec2_key.pem -o StrictHostKeyChecking=no -r ./* \
             ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:${{ inputs.APP_DIR }}/
 
-      # # 5️⃣ Copy .env file to EC2
-      # - name: Copy .env to EC2
-      #   run: |
-      #     scp -i ec2_key.pem -o StrictHostKeyChecking=no .env \
-      #       ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:${{ inputs.APP_DIR }}/.env
-
-      # # 6️⃣ Copy deploy script to EC2
-      # - name: Copy deploy script to EC2
-      #   run: |
-      #     scp -i ec2_key.pem -o StrictHostKeyChecking=no deploy_on_ec2.sh \
-      #       ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:${{ inputs.APP_DIR }}/
-
       # 7️⃣ Build & run Docker app on EC2
       - name: Build & Run on EC2
         run: |
           ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << EOF
             set -e
+
+            if ! command -v docker &> /dev/null
+            then
+              echo '🚀 Installing Docker...'
+              sudo apt-get update
+              sudo apt-get install -y docker.io
+              sudo systemctl enable docker
+              sudo systemctl start docker
+              sudo usermod -aG docker ${{ secrets.EC2_USER }}
+              echo 'Docker installed and user added to docker group'
+            fi
+
             cd ${{ inputs.APP_DIR }}
 
             docker kill ${{ inputs.CONTAINER_NAME }} || echo ' ${{ inputs.CONTAINER_NAME }} cannot be killed '
