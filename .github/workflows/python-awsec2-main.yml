@@ -10,6 +10,9 @@ on:
       IMAGE_NAME:
         type: string
         required: true
+      CONTAINER_NAME:
+        type: string
+        required: true
       APP_DIR:
         type: string
         required: true
@@ -33,9 +36,9 @@ jobs:
       - name: Set up SSH key and .env
         run: |
           echo "${{ secrets.EC2_KEY }}" > ec2_key.pem
-          printf "%s" "${{ secrets.ENV }}" > .env
+          # printf "%s" "${{ secrets.ENV }}" > .env
           chmod 600 ec2_key.pem
-          chmod 600 .env
+          # chmod 600 .env
 
       # 3️⃣ Prepare app directory on EC2
       - name: Prepare EC2 directory
@@ -52,41 +55,30 @@ jobs:
           scp -i ec2_key.pem -o StrictHostKeyChecking=no -r ./* \
             ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:${{ inputs.APP_DIR }}/
 
-      # 5️⃣ Copy .env file to EC2
-      - name: Copy .env to EC2
-        run: |
-          scp -i ec2_key.pem -o StrictHostKeyChecking=no .env \
-            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:${{ inputs.APP_DIR }}/.env
+      # # 5️⃣ Copy .env file to EC2
+      # - name: Copy .env to EC2
+      #   run: |
+      #     scp -i ec2_key.pem -o StrictHostKeyChecking=no .env \
+      #       ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:${{ inputs.APP_DIR }}/.env
 
-      # 6️⃣ Copy deploy script to EC2
-      - name: Copy deploy script to EC2
-        run: |
-          scp -i ec2_key.pem -o StrictHostKeyChecking=no deploy_on_ec2.sh \
-            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:${{ inputs.APP_DIR }}/
+      # # 6️⃣ Copy deploy script to EC2
+      # - name: Copy deploy script to EC2
+      #   run: |
+      #     scp -i ec2_key.pem -o StrictHostKeyChecking=no deploy_on_ec2.sh \
+      #       ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:${{ inputs.APP_DIR }}/
 
       # 7️⃣ Build & run Docker app on EC2
       - name: Build & Run on EC2
         run: |
           ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << EOF
             set -e
-
-            # Add user to docker group (if not already)
-            sudo usermod -aG docker \$USER || true
-            newgrp docker << EONG
-              echo "Docker group updated"
-            EONG
-
             cd ${{ inputs.APP_DIR }}
 
-            # Stop and remove existing container if exists
-            docker stop ${{ inputs.IMAGE_NAME }} || true
-            docker rm ${{ inputs.IMAGE_NAME }} || true
-
-            # Build Docker image
+            docker kill ${{ inputs.CONTAINER_NAME }} || echo " ${{ inputs.CONTAINER_NAME }} cannot be killed "
+            docker rmi -f \$(docker images -q) || echo "Failed to remove images"
+            docker system prune -a --volumes -f || echo "Failed to prune system"
             docker build -f ${{ inputs.DOCKER_FILE }} -t ${{ inputs.IMAGE_NAME }}:latest .
-
-            # Run Docker container
-            docker run -d --name ${{ inputs.IMAGE_NAME }} -p ${{ inputs.APP_PORT }}:${{ inputs.APP_PORT }} ${{ inputs.IMAGE_NAME }}:latest
+            docker run -d --name ${{ inputs.CONTAINER_NAME }} -p ${{ inputs.APP_PORT }}:${{ inputs.APP_PORT }} ${{ inputs.IMAGE_NAME }}:latest
           EOF
 
       # 8️⃣ Deployment complete
