@@ -12,9 +12,14 @@ def hello():
 def reset():
     """
     Reset the application state.
+    Example request JSON:
+    {
+        "exclusions": ["product", "service"]
+    }
     """
     try:
-        reset_handlers()
+        exclusions = request.json.get('exclusions', [])
+        reset_handlers(exclusions)
         return jsonify({'success': True, 'message': 'Application state reset successfully'}), 200
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500

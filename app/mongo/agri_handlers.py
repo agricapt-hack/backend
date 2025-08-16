@@ -145,7 +145,8 @@ class ProductServiceSuggestionHandler(BaseMongoHandler):
                 "suggestion_id": f"suggestion_{suggestions.get('sensor_hub_id', '')}_{suggestions.get('timestamp', '')}",
                 "sensor_hub_id": suggestions.get('sensor_hub_id', ''),
                 "suggestions": formatted_suggestions,
-                "timestamp": suggestions.get('timestamp', '')
+                "timestamp": suggestions.get('timestamp', ''),
+                "delivery_status": "pending"  # [ 'pending', 'wap', 'mail' , 'wap+mail']
             }
             return self.add_item(
                 item=payload,
@@ -154,6 +155,18 @@ class ProductServiceSuggestionHandler(BaseMongoHandler):
         else:
             print("No valid product or service suggestions to add.")
         return None
+    
+    def update_delivery_status(self, suggestion_id: str, delivery_status: str):
+        """
+        Update the delivery status of a suggestion.
+        """
+        if not suggestion_id or not delivery_status:
+            return False
+        result = self.collection.update_one(
+            {"suggestion_id": suggestion_id},
+            {"$set": {"delivery_status": delivery_status}}
+        )
+        return result.modified_count > 0
             
     
 
@@ -227,6 +240,10 @@ Instructions:
             sensor_hub_id: "hub_001" 
         }
         """
+        alert = {
+            **alert,
+            "delivery_status": "pending"  # [ 'pending', 'wap', 'mail' , 'wap+mail']
+        }
         return self.add_item(
             item=alert,
             unique_field="alert_id",
@@ -249,6 +266,18 @@ Instructions:
         if not sensor_hub_ids:
             return []
         return list(self.collection.find({"sensor_hub_id": {"$in": sensor_hub_ids}}))
+    
+    def update_delivery_status(self, alert_id: str, delivery_status: str):
+        """
+        Update the delivery status of an alert.
+        """
+        if not alert_id or not delivery_status:
+            return False
+        result = self.collection.update_one(
+            {"alert_id": alert_id},
+            {"$set": {"delivery_status": delivery_status}}
+        )
+        return result.modified_count > 0
 
 
     def generate_requirement(self, date:str, sensor_hub_id: str):
@@ -493,15 +522,22 @@ WEATHER_HANDLER = WeatherHandler()
 FIELD_HANDLER = FieldHandler(user_handler=USER_HANDLER)
 
 
-def reset_handlers():
+def reset_handlers(exclusions=[]):
     """
     Reset all handlers by deleting all data in their respective collections.
     This is useful for testing or resetting the database.
     """
-    AGRI_PRODUCT_HANDLER.delete_all()
-    AGRI_SERVICE_HANDLER.delete_all()
-    AGRI_PRODUCT_SERVICE_SUGGESTION_HANDLER.delete_all()
-    ALERT_STORAGE_HANDLER.delete_all()
-    USER_HANDLER.delete_all()
-    WEATHER_HANDLER.delete_all()
-    FIELD_HANDLER.delete_all()
+    if 'product' not in exclusions:
+        AGRI_PRODUCT_HANDLER.delete_all()
+    if 'service' not in exclusions:
+        AGRI_SERVICE_HANDLER.delete_all()
+    if 'suggestion' not in exclusions:
+        AGRI_PRODUCT_SERVICE_SUGGESTION_HANDLER.delete_all()
+    if 'alert' not in exclusions:
+        ALERT_STORAGE_HANDLER.delete_all()
+    if 'user' not in exclusions:
+        USER_HANDLER.delete_all()
+    if 'weather' not in exclusions:
+        WEATHER_HANDLER.delete_all()
+    if 'field' not in exclusions:
+        FIELD_HANDLER.delete_all()  
