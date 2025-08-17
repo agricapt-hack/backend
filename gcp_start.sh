@@ -14,6 +14,7 @@ gcloud services enable cloudresourcemanager.googleapis.com \
     iam.googleapis.com \
     storage.googleapis.com \
     aiplatform.googleapis.com \
+    run.googleapis.com \
     --project=$GCP_PROJECT_ID
 
 
