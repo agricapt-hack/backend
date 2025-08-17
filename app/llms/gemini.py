@@ -341,7 +341,8 @@ from google import genai
 
 class GeminiImageUnderstandingEngine:
     def __init__(self):
-        self.client = genai.Client()
+        pass
+        # self.client = genai.Client()
 
     def run(self, image_path: str, prompt:str):
         return {
