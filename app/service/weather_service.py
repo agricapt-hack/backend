@@ -6,9 +6,8 @@ import os
 load_dotenv()
 from typing import List, Dict
 from datetime import datetime
-from app.mongo.agri_handlers import WeatherHandler
+from app.mongo.agri_handlers import WEATHER_HANDLER
 
-weather_handler = WeatherHandler()
 
 def format_tomorrow_result(forecasts: List[Dict], recents: List[Dict]) -> Dict[str, str]:
     """
@@ -135,19 +134,25 @@ class TomorrowWeather:
         return result
     
 
-    def cache_lookup(self, latitude: float, longitude: float) -> Optional[Dict]:
+    def cache_lookup(self, latitude: float, longitude: float, formated=True) -> Optional[Dict]:
         date = datetime.utcnow().strftime("%Y-%m-%d")
         unique_field = "latitude_longitude_date"
         unique_field_value = f"{int(latitude)}_{int(longitude)}_{date}"
-        look_up_result = weather_handler.get_by_id(
+        look_up_result = WEATHER_HANDLER.get_by_id(
             unique_field=unique_field,
             value=unique_field_value
         )
         if look_up_result:
-            return format_tomorrow_result(
-                forecasts=look_up_result.get("forecasts", []),
-                recents=look_up_result.get("recents", [])
-            )
+            if formated:
+                return format_tomorrow_result(
+                    forecasts=look_up_result.get("forecasts", []),
+                    recents=look_up_result.get("recents", [])
+                )
+            else:
+                return {
+                    "forecasts": look_up_result.get("forecasts", []),
+                    "recents": look_up_result.get("recents", [])
+                }
         return None
     
     def add_weather_data(self, latitude: float, longitude: float, forecasts, recents):
@@ -158,16 +163,16 @@ class TomorrowWeather:
             "forecasts": forecasts,
             "recents": recents
         }
-        weather_handler.add_weather_data(payload)
+        WEATHER_HANDLER.add_weather_data(payload)
 
 
-    def __call__(self, latitude, longitude, days):
+    def __call__(self, latitude, longitude, days, formated=True) -> Dict[str, str]:
         """
         Fetches weather data for the given latitude and longitude for the next `days`.
         Returns a dictionary with formatted results.
         """
         try:
-            look_up_result = self.cache_lookup(latitude, longitude)
+            look_up_result = self.cache_lookup(latitude, longitude, formated=formated)
             if look_up_result:
                 print("Cache hit, returning cached data.")
                 return look_up_result
@@ -177,7 +182,13 @@ class TomorrowWeather:
             self.add_weather_data(latitude, longitude, forecasts, recents)
             print("Cache miss, fetched new data and stored in cache.")
 
-            return format_tomorrow_result(forecasts, recents)
+            if formated:
+                return format_tomorrow_result(forecasts, recents)
+            else:
+                return {
+                    "forecasts": forecasts,
+                    "recents": recents
+                }
         except Exception as e:
             return {"error": str(e)}
         

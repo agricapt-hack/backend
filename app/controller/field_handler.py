@@ -3,6 +3,7 @@ from app.service.hello_service import get_hello_message
 from app.models.registration_model import AddUserSchema, AddFieldSchema
 from pydantic import ValidationError
 from app.mongo.agri_handlers import USER_HANDLER, FIELD_HANDLER
+from app.service.weather_service import TOMORROW_WEATHER_SERVICE
 from app.postgres.rds import RDS_POSTGRES_DB
 
 field_blueprint = Blueprint('field', __name__)
@@ -146,5 +147,25 @@ def get_sensor_data_by_hub():
             return jsonify({'success': True, 'data': sensor_data}), 200
         else:
             return jsonify({'success': False, 'message': 'No data found for this hub'}), 404
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+    
+
+@field_blueprint.route('/get-weather-data-by-hubid', methods=['POST'])
+def get_weather_data_by_hub():
+    data = request.get_json()
+    sensor_hub_id = data.get('sensor_hub_id')
+    
+    if not sensor_hub_id:
+        return jsonify({'success': False, 'message': 'Sensor Hub ID is required'}), 400
+    
+    try:
+        field_details = FIELD_HANDLER.get_fields_by_hub_id(sensor_hub_id)
+        if not field_details:
+            return jsonify({'success': False, 'message': 'No field found for the given Sensor Hub ID'}), 404
+        latitude = field_details[0]['field_location']['latitude']
+        longitude = field_details[0]['field_location']['longitude']
+        weather_data = TOMORROW_WEATHER_SERVICE(latitude, longitude, days=7, formated=False)
+        return jsonify({'success': True, 'weather_data': weather_data}), 200
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
