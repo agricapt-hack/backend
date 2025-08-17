@@ -42,6 +42,7 @@ class EmailNotificationService:
         - temperature: 🌡
         - misc: ❓
         - sensor: 🛠
+        - disease: 🦠
         """
         alerts = ALERT_STORAGE_HANDLER.get_by_query(
             query={
@@ -69,7 +70,8 @@ class EmailNotificationService:
                         'rain': '🌧',
                         'temperature': '🌡',
                         'misc': '❓',
-                        'sensor': '🛠'
+                        'sensor': '🛠',
+                        'disease': '🦠'
                     }.get(alert['type'], '')
                     subject = f"[HARVEST.AI ALERT] Alert Notification for {emoji_type} on {date} {emoji_severity}"
                     body = f"Hi {name},\nAlert ID: {alert['alert_id']}\nSensor Hub ID: {sensor_hub_id}\nAction Body: {alert['action_body']}\nType: {alert['type']}\nSeverity: {alert['action_severity']}"

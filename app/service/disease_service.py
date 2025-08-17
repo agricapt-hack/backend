@@ -62,7 +62,7 @@ If there is no disease then return is_disease as False and action_body as "No di
             
             # Step 2: Process the response and generate action
             action_response = self.action_engine.run(
-                "Analsis of the agricultural image: " + gemini_response["result"]
+                "Analysis of the agricultural image: " + gemini_response["result"]
             )[0]
             if action_response['is_disease']:
                 timstamp = datetime.now().isoformat()

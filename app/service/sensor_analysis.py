@@ -36,10 +36,12 @@ class SensorSqlLlmEngine:
         self.db.create_table("arduino_data", [
             ("timestamp", String),
             ("sensor_hub_id", String),
+            ("nitrogen_level", Float),
+            ("phosphorus_level", Float),
+            ("potassium_level", Float),
             ("temperature", Float),
             ("humidity", Float),
-            ("naklevel", Float),
-            ("waterlevel", Float)
+            ("ph_level", Float)
         ])
         self.schema = self.db.metadata.tables["arduino_data"]
         head_cols, head_rows = self.db.query_data("SELECT * FROM arduino_data LIMIT 5")
