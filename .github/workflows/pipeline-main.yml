@@ -14,7 +14,7 @@ jobs:
             GCP_PROJECT_ID: sample-project-1-464117
             CLOUD_RUN_SERVICE: capital-one-server
             CLOUD_RUN_REGION: us-central1
-            GAR_LOCATION: us-central1-docker.pkg.dev/sample-project-1-464117/capital-one-server
+            GAR_LOCATION: us-central1-docker.pkg.dev/sample-project-1-464117/capital-one-repo
             GAR_LOCATION_PREFIX: us-central1-docker.pkg.dev
             IMAGE_NAME: capital-one-server-image
             SERVICE_ACCOUNT: sample-project-1-464117@sample-project-1-464117.iam.gserviceaccount.com

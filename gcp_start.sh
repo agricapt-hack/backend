@@ -1,6 +1,8 @@
 export GCP_PROJECT_ID="sample-project-1-464117"
 export SERVICE_AC_DISPLAYNAME="sample-project-1-464117"
 export LOCATION="us-central1"
+export GAR_REPOSITORY_ID="capital-one-repo"
+export GAR_LOCATION="us-central1"
 
 
 gcloud config set project $GCP_PROJECT_ID
@@ -36,3 +38,11 @@ done
 
 gcloud iam service-accounts keys create key.json \
     --iam-account=$SERVICE_AC_DISPLAYNAME@$GCP_PROJECT_ID.iam.gserviceaccount.com
+
+
+
+gcloud artifacts repositories create $GAR_REPOSITORY_ID \
+    --project=$GCP_PROJECT_ID \
+    --location=$GAR_LOCATION \
+    --repository-format=docker \
+    --description="Docker repository for Python server"
