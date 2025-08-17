@@ -4,6 +4,8 @@ from app.models.registration_model import AddUserSchema, AddFieldSchema
 from pydantic import ValidationError
 from app.mongo.agri_handlers import FIELD_HANDLER, ALERT_STORAGE_HANDLER, AGRI_PRODUCT_SERVICE_SUGGESTION_HANDLER
 from app.service.alertsugg_service import run_action_suggestion_pipeline
+from app.service.disease_service import DISEASE_PREDICTION_PIPELINE
+import os
 
 alert_blueprint = Blueprint('alert', __name__)
 
@@ -276,3 +278,30 @@ def delete_suggestion_by_hubid():
         return jsonify({'success': True, 'message': 'Suggestions deleted successfully'}), 200
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
+
+@alert_blueprint.route('/process-disease-image', methods=['POST'])
+def process_image():
+    """
+    Expects multipart/form-data with:
+      - 'image': the image file
+      - 'sensor_hub_id': the sensor hub id (as a form field)
+    """
+    if 'image' not in request.files or 'sensor_hub_id' not in request.form:
+        return jsonify({'success': False, 'message': 'Image file and sensor_hub_id are required'}), 400
+
+    image = request.files['image']
+    sensor_hub_id = request.form['sensor_hub_id']
+
+    if image.filename == '':
+        return jsonify({'success': False, 'message': 'No selected file'}), 400
+
+    # Example: Save image to disk (customize as needed)
+    os.makedirs('./tmp', exist_ok=True)
+    save_path = f"./tmp/{sensor_hub_id}_{image.filename}"
+    image.save(save_path)
+
+
+    # You can add logic here to process/store the image as needed
+    result = DISEASE_PREDICTION_PIPELINE.run(save_path, sensor_hub_id)
+
+    return jsonify({'success': True, 'message': result}), 200

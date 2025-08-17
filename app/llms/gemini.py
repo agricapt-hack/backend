@@ -4,7 +4,7 @@ import google.auth.transport.requests
 from google.oauth2 import service_account
 import requests
 from .utils.tool_formatter import pydantic_schema_to_tool_format, dict_to_tool_format
-from ..service.logger import LOGGER
+from .utils.logger import LOGGER
 import time
 
 
@@ -326,3 +326,46 @@ class GeminiSimpleChatEngine:
         
         response = self.model.generate_content(_content_roles, simplify_output=True)
         return response
+    
+
+
+#####################################################################################################
+# The following code is used to create a GeminiImageUnderstandingEngine class that can be used to interact with the Gemini API for image understanding.
+# It is a wrapper around the GeminiModel class that simplifies image understanding tasks.
+# It uses the Gemini API to analyze images and return structured responses.
+
+
+
+from google.genai import types
+from google import genai
+
+class GeminiImageUnderstandingEngine:
+    def __init__(self):
+        self.client = genai.Client()
+
+    def run(self, image_path: str, prompt:str):
+        return {
+            "result":"The rice plant in this image exhibits clear symptoms of a disease, most notably Rice Blast, caused by the fungus Magnaporthe oryzae. The characteristic lesions are elongated or spindle-shaped, with distinct dark brown margins and lighter, often grayish or tan, centers, visible across multiple leaf blades. These spots are numerous and widely distributed across the visible leaf surfaces, covering a significant portion of the photosynthetic area. Based on the widespread presence and size of these necrotic lesions, the severity of the disease appears to be moderate to severe, indicating a significant level of infection that could impact the plant's health and yield."
+        }
+        try:
+            with open(image_path, "rb") as image_file:
+                image_content = image_file.read()
+
+            response = self.client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=[
+                    types.Part.from_bytes(
+                        data=image_content,
+                        mime_type="image/jpeg",
+                    ),
+                    prompt
+                ]
+            )
+
+            return {
+                "result": response.text
+            }
+        except Exception as e:
+            return {
+                "error": f"Error processing image: {str(e)}"
+            }

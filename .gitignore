@@ -179,3 +179,5 @@ key.json
 *.jpg
 *.jpeg
 *.gif
+
+tmp/
