@@ -534,7 +534,16 @@ class FieldHandler(BaseMongoHandler):
             return self.user_handler.get_by_id("user_id", field.get("user_id"))
         return None
     
-
+    def delete_by_id(self, unique_field, value):
+        super().delete_by_id(unique_field, value)
+        # remove the field from the user handler if it exists
+        if self.user_handler:
+            user = self.user_handler.get_by_id("user_id", value)
+            if user:
+                # Assuming user has a list of field_ids
+                user['field_ids'] = [fid for fid in user.get('field_ids', []) if fid != value]
+                self.user_handler.update_item(user, unique_field="user_id")
+        return True
 
 
 # Handlers
