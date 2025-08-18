@@ -8,6 +8,18 @@ from email import encoders
 import requests
 import os
 from app.mongo.agri_handlers import ALERT_STORAGE_HANDLER,AGRI_PRODUCT_SERVICE_SUGGESTION_HANDLER, FIELD_HANDLER
+from app.llms.openai import LangchainOpenaiSimpleChatEngine
+
+
+summarizer = LangchainOpenaiSimpleChatEngine(
+    model_name="gpt-4o-mini",
+    temperature="0.1",
+    systemPromptText="""You are an AI summarizer. Your task is too summarize a list huge alerts/suggestions into 3-4 lines. Only focus on high or ciritcal or severe ones." \
+Instructions:
+    - For alerts focus on the type, severity, and action body.
+    - For suggestions focus on the Product name, why it is needed and price.
+"""
+)
 
 
 class EmailNotificationService:
@@ -171,6 +183,10 @@ class EmailNotificationService:
             message = f"Hi, you have the following alerts:\n{alert_info['body']}\nAlerts: {', '.join(alert_info['alerts'])}"
             payload = {"to": whatsapp_number, "message": message}
             try:
+                print("WAP URL:", self.whatsapp_server_url)
+                # print("WAP Payload:", payload)
+                payload['message'] = summarizer.run(f"Here are some alerts: {payload['message']}. \n\n Now summarize it into 3-4 lines")
+                print("WAP Payload after summary:", payload)
                 response = requests.post(self.whatsapp_server_url, json=payload)
                 response.raise_for_status()
                 print(f"WhatsApp alert sent to {whatsapp_number}")
@@ -182,6 +198,10 @@ class EmailNotificationService:
             message = f"Hi, you have the following suggestions:\n{suggestion_info['body']}\nSuggestions: {', '.join(suggestion_info['suggestions'])}"
             payload = {"to": whatsapp_number, "message": message}
             try:
+                print("WAP URL:", self.whatsapp_server_url)
+                # print("WAP Payload:", payload)
+                payload['message'] = summarizer.run(f"Here are some suggestions: {payload['message']}. \n\n Now summarize it into 3-4 lines")
+                print("WAP Payload after summary:", payload)
                 response = requests.post(self.whatsapp_server_url, json=payload)
                 response.raise_for_status()
                 print(f"WhatsApp suggestion sent to {whatsapp_number}")
