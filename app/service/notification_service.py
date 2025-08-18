@@ -72,7 +72,7 @@ class EmailNotificationService:
                 cur_delivery_status = alert.get('delivery_status', '')
                 user = FIELD_HANDLER.get_user_by_hub_id(sensor_hub_id)
                 email = user.get('email') if user else None
-                whatsapp_number = "+918388063520" #user.get('whatsapp_number') if user else None
+                whatsapp_number = "+919434664847" #user.get('whatsapp_number') if user else None
                 name = user.get('name') if user else "User"
                 if email:
                     emoji_severity = {
@@ -130,7 +130,7 @@ class EmailNotificationService:
             cur_delivery_status = suggestion.get('delivery_status', '')
             user = FIELD_HANDLER.get_user_by_hub_id(sensor_hub_id)
             email = user.get('email') if user else None
-            whatsapp_number = "+918388063520" #user.get('whatsapp_number') if user else None
+            whatsapp_number = "+919434664847" #user.get('whatsapp_number') if user else None
             name = user.get('name') if user else "User"
             if email:
                 subject = f"[HARVEST.AI SUGGESTION] Suggestions for {date} 🌱"
@@ -178,7 +178,7 @@ class EmailNotificationService:
 
         # Step 3: Send notifications via WhatsApp
         for whatsapp_number, alert_info in whatsapp_alert_notifications.items():
-            if whatsapp_number!="+918388063520":
+            if whatsapp_number!="+919434664847":
                 continue
             message = f"Hi, you have the following alerts:\n{alert_info['body']}\nAlerts: {', '.join(alert_info['alerts'])}"
             payload = {"to": whatsapp_number, "message": message}
