@@ -341,13 +341,13 @@ from google import genai
 
 class GeminiImageUnderstandingEngine:
     def __init__(self):
-        pass
-        # self.client = genai.Client()
+        # pass
+        self.client = genai.Client()
 
     def run(self, image_path: str, prompt:str):
-        return {
-            "result":"The rice plant in this image exhibits clear symptoms of a disease, most notably Rice Blast, caused by the fungus Magnaporthe oryzae. The characteristic lesions are elongated or spindle-shaped, with distinct dark brown margins and lighter, often grayish or tan, centers, visible across multiple leaf blades. These spots are numerous and widely distributed across the visible leaf surfaces, covering a significant portion of the photosynthetic area. Based on the widespread presence and size of these necrotic lesions, the severity of the disease appears to be moderate to severe, indicating a significant level of infection that could impact the plant's health and yield."
-        }
+        # return {
+        #     "result":"The rice plant in this image exhibits clear symptoms of a disease, most notably Rice Blast, caused by the fungus Magnaporthe oryzae. The characteristic lesions are elongated or spindle-shaped, with distinct dark brown margins and lighter, often grayish or tan, centers, visible across multiple leaf blades. These spots are numerous and widely distributed across the visible leaf surfaces, covering a significant portion of the photosynthetic area. Based on the widespread presence and size of these necrotic lesions, the severity of the disease appears to be moderate to severe, indicating a significant level of infection that could impact the plant's health and yield."
+        # }
         try:
             with open(image_path, "rb") as image_file:
                 image_content = image_file.read()

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Trigger Endpoints</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 40px;
+            background: #181818;
+            color: #f1f1f1;
+        }
+        .container { max-width: 500px; margin: auto; }
+        label { display: block; margin-top: 20px; font-weight: bold; color: #f1f1f1; }
+        input[type="text"], input[type="date"] {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            background: #222;
+            color: #f1f1f1;
+            border: 1px solid #444;
+            border-radius: 4px;
+        }
+        input[type="text"]::placeholder {
+            color: #888;
+        }
+        .btn {
+            width: 100%;
+            padding: 20px;
+            margin-top: 30px;
+            font-size: 1.2em;
+            background: #c62828;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        .btn:hover { background: #b71c1c; }
+        .msg {
+            margin-top: 20px;
+            font-size: 1em;
+            color: #80cbc4;
+        }
+        .spinner-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(24,24,24,0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .spinner {
+            border: 8px solid #333;
+            border-top: 8px solid #c62828;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg);}
+            100% { transform: rotate(360deg);}
+        }
+        .toast {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #222;
+            color: #fff;
+            padding: 16px 32px;
+            border-radius: 8px;
+            font-size: 1.1em;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s;
+            z-index: 1100;
+        }
+        .toast.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Trigger Endpoints</h2>
+        <label for="sensor_hub_id">Sensor Hub ID</label>
+        <input type="text" id="sensor_hub_id" placeholder="Enter sensor hub id">
+
+        <label for="date">Date</label>
+        <input type="date" id="date">
+
+        <button class="btn" id="triggerAlert">Trigger Alert</button>
+        <button class="btn" id="triggerProductService">Trigger Product Service</button>
+        <button class="btn" id="triggerEmailNotifications">Trigger Email Notifications</button>
+
+        <div class="msg" id="msg"></div>
+    </div>
+    <div class="spinner-overlay" id="spinnerOverlay">
+        <div class="spinner"></div>
+    </div>
+    <div class="toast" id="toast"></div>
+    <script>
+        const msg = document.getElementById('msg');
+        const spinnerOverlay = document.getElementById('spinnerOverlay');
+        const toast = document.getElementById('toast');
+
+        function showSpinner() {
+            spinnerOverlay.style.display = 'flex';
+        }
+        function hideSpinner() {
+            spinnerOverlay.style.display = 'none';
+        }
+        function showToast(text, isError=false) {
+            toast.textContent = text;
+            toast.style.background = isError ? '#c62828' : '#222';
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+        function showMsg(text, isError=false) {
+            msg.textContent = text;
+            msg.style.color = isError ? '#d32f2f' : '#388e3c';
+        }
+
+        async function handleRequest(url, payload, successMsg, errorMsg) {
+            showSpinner();
+            try {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                hideSpinner();
+                if (res.ok) {
+                    showMsg(successMsg, false);
+                    showToast(successMsg, false);
+                } else {
+                    showMsg(errorMsg, true);
+                    showToast(errorMsg, true);
+                }
+            } catch (e) {
+                hideSpinner();
+                showMsg('Network error', true);
+                showToast('Network error', true);
+            }
+        }
+
+        document.getElementById('triggerAlert').onclick = () => {
+            const sensor_hub_id = document.getElementById('sensor_hub_id').value.trim();
+            if (!sensor_hub_id) {
+                showMsg('Sensor Hub ID required', true);
+                showToast('Sensor Hub ID required', true);
+                return;
+            }
+            handleRequest(
+                'https://capital-one-server-20555262314.us-central1.run.app/alert/trigger-alert',
+                { sensor_hub_id },
+                'Alert triggered!',
+                'Failed to trigger alert'
+            );
+        };
+
+        document.getElementById('triggerProductService').onclick = () => {
+            const sensor_hub_id = document.getElementById('sensor_hub_id').value.trim();
+            const date = document.getElementById('date').value;
+            if (!sensor_hub_id || !date) {
+                showMsg('Sensor Hub ID and Date required', true);
+                showToast('Sensor Hub ID and Date required', true);
+                return;
+            }
+            handleRequest(
+                'https://capital-one-server-20555262314.us-central1.run.app/alert/trigger-product-service',
+                { sensor_hub_id, date },
+                'Product service triggered!',
+                'Failed to trigger product service'
+            );
+        };
+
+        document.getElementById('triggerEmailNotifications').onclick = () => {
+            const date = document.getElementById('date').value;
+            if (!date) {
+                showMsg('Date required', true);
+                showToast('Date required', true);
+                return;
+            }
+            handleRequest(
+                'https://capital-one-server-20555262314.us-central1.run.app/notification/trigger-email-notifications',
+                { date },
+                'Email notifications triggered!',
+                'Failed to trigger email notifications'
+            );
+        };
+    </script>
+</body>
+</html>
